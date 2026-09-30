@@ -1,8 +1,11 @@
+import os
+os.environ['JAX_PLATFORMS'] = 'cpu' # Apaga la búsqueda de GPU y fuerza el uso de CPU
+
 import requests
 import pandas as pd
 import numpy as np
 from datetime import datetime, timezone
-import timesfm # Librería oficial de Google
+import timesfm 
 
 # Configuración
 TICKERS = [
@@ -10,14 +13,10 @@ TICKERS = [
     "ADAUSDT", "AVAXUSDT", "LINKUSDT", "DOTUSDT", "NEARUSDT"
 ]
 BINANCE_URL = "https://api.binance.com/api/v3/klines"
-CONTEXT_LEN = 512 # Ventana histórica que mirará el modelo (512 horas)
-HORIZON_LEN = 12  # Horas hacia el futuro que va a predecir
+CONTEXT_LEN = 512 
+HORIZON_LEN = 12  
 
 def inicializar_modelo_timesfm():
-    """
-    Descarga e inicializa el modelo pre-entrenado de Google.
-    Se configura para usar CPU, ideal para GitHub Actions.
-    """
     print("Cargando modelo TimesFM desde Hugging Face (esto puede tardar unos minutos)...")
     tfm = timesfm.TimesFm(
         context_len=CONTEXT_LEN,
@@ -26,15 +25,13 @@ def inicializar_modelo_timesfm():
         output_patch_len=128,
         num_layers=20,
         model_dims=1280,
-        backend="cpu" # Forzamos CPU para que corra gratis en GitHub Actions
+        backend="cpu" 
     )
-    # Descarga los pesos del modelo oficial
     tfm.load_from_checkpoint(repo_id="google/timesfm-1.0-200m")
     print("✅ Modelo cargado correctamente.")
     return tfm
 
 def obtener_datos_binance(symbol, interval="1h", limit=CONTEXT_LEN):
-    """Descarga el historial de precios desde Binance."""
     params = {"symbol": symbol, "interval": interval, "limit": limit}
     try:
         response = requests.get(BINANCE_URL, params=params)
@@ -52,23 +49,17 @@ def obtener_datos_binance(symbol, interval="1h", limit=CONTEXT_LEN):
         return None
 
 def predecir_con_timesfm(tfm, df):
-    """
-    Utiliza TimesFM para proyectar el precio.
-    """
     historia_precios = df['close'].values
     precio_actual = historia_precios[-1]
 
     # Inferencia con TimesFM (freq=[0] indica alta frecuencia)
     forecast_result = tfm.forecast(inputs=[historia_precios], freq=[0])
     
-    # Extraemos la predicción puntual
     predicciones_futuras = forecast_result[0][0] 
     precio_proyectado_12h = predicciones_futuras[-1] 
     
-    # Calcular la variación esperada
     variacion_pct = ((precio_proyectado_12h - precio_actual) / precio_actual) * 100
     
-    # Generar Señal
     if variacion_pct > 1.5:
         senal = "COMPRA 🟢"
     elif variacion_pct < -1.5:
@@ -79,7 +70,6 @@ def predecir_con_timesfm(tfm, df):
     return senal, precio_actual, variacion_pct, precio_proyectado_12h
 
 def actualizar_readme(resultados):
-    """Reescribe el archivo README.md con la nueva tabla"""
     fecha_actual = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     
     md = f"# 🧠 TimesFM Crypto Predictor\n\n"
@@ -122,7 +112,7 @@ def main():
             })
             print(f"{ticker}: Procesado ({senal})")
         else:
-            print(f"[{ticker}] Datos insuficientes (necesarios {CONTEXT_LEN}).")
+            print(f"[{ticker}] Datos insuficientes.")
             
     actualizar_readme(resultados)
 
