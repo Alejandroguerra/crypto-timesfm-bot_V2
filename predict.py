@@ -1,23 +1,22 @@
 import os
-os.environ['JAX_PLATFORMS'] = 'cpu' # Apaga la búsqueda de GPU y fuerza el uso de CPU
+os.environ['JAX_PLATFORMS'] = 'cpu'
 
-import requests
 import pandas as pd
 import numpy as np
 from datetime import datetime, timezone
-import timesfm 
+import timesfm
+import yfinance as yf
 
-# Configuración
+# En Yahoo Finance, los pares se buscan con -USD
 TICKERS = [
-    "BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", 
-    "ADAUSDT", "AVAXUSDT", "LINKUSDT", "DOTUSDT", "NEARUSDT"
+    "BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD", "XRP-USD", 
+    "ADA-USD", "AVAX-USD", "LINK-USD", "DOT-USD", "NEAR-USD"
 ]
-BINANCE_URL = "https://api.binance.com/api/v3/klines"
 CONTEXT_LEN = 512 
 HORIZON_LEN = 12  
 
 def inicializar_modelo_timesfm():
-    print("Cargando modelo TimesFM desde Hugging Face (esto puede tardar unos minutos)...")
+    print("Cargando modelo TimesFM desde Hugging Face...")
     tfm = timesfm.TimesFm(
         context_len=CONTEXT_LEN,
         horizon_len=HORIZON_LEN,
@@ -31,18 +30,16 @@ def inicializar_modelo_timesfm():
     print("✅ Modelo cargado correctamente.")
     return tfm
 
-def obtener_datos_binance(symbol, interval="1h", limit=CONTEXT_LEN):
-    params = {"symbol": symbol, "interval": interval, "limit": limit}
+def obtener_datos_yahoo(symbol, limit=CONTEXT_LEN):
     try:
-        response = requests.get(BINANCE_URL, params=params)
-        response.raise_for_status()
-        data = response.json()
-        df = pd.DataFrame(data, columns=[
-            "timestamp", "open", "high", "low", "close", "volume", 
-            "close_time", "quote_asset_volume", "number_of_trades", 
-            "taker_buy_base_asset_volume", "taker_buy_quote_asset_volume", "ignore"
-        ])
-        df['close'] = df['close'].astype(float)
+        ticker = yf.Ticker(symbol)
+        df = ticker.history(period="1mo", interval="1h")
+        if len(df) < limit:
+            return None
+        
+        # Tomamos exactamente las últimas 512 horas
+        df = df.tail(limit)
+        df['close'] = df['Close'].astype(float)
         return df
     except Exception as e:
         print(f"Error descargando {symbol}: {e}")
@@ -52,9 +49,8 @@ def predecir_con_timesfm(tfm, df):
     historia_precios = df['close'].values
     precio_actual = historia_precios[-1]
 
-    # Inferencia con TimesFM (freq=[0] indica alta frecuencia)
+    # Inferencia con TimesFM
     forecast_result = tfm.forecast(inputs=[historia_precios], freq=[0])
-    
     predicciones_futuras = forecast_result[0][0] 
     precio_proyectado_12h = predicciones_futuras[-1] 
     
@@ -80,7 +76,6 @@ def actualizar_readme(resultados):
     md += "| :--- | :--- | :--- | :--- | :--- |\n"
     
     for res in resultados:
-        nombre = res['ticker'].replace('USDT', '')
         precio = f"${res['precio']:.4f}".rstrip('0').rstrip('.')
         proy = f"${res['proyectado']:.4f}".rstrip('0').rstrip('.')
         var = f"{res['variacion']:.2f}%"
@@ -88,7 +83,7 @@ def actualizar_readme(resultados):
         if res['variacion'] > 0: var = f"+{var} 📈"
         elif res['variacion'] < 0: var = f"{var} 📉"
             
-        md += f"| **{nombre}** | {precio} | {proy} | {var} | **{res['senal']}** |\n"
+        md += f"| **{res['ticker']}** | {precio} | {proy} | {var} | **{res['senal']}** |\n"
 
     with open("README.md", "w", encoding="utf-8") as f:
         f.write(md)
@@ -99,24 +94,32 @@ def main():
     resultados = []
     
     for ticker in TICKERS:
-        df = obtener_datos_binance(ticker, interval="1h", limit=CONTEXT_LEN)
+        df = obtener_datos_yahoo(ticker, limit=CONTEXT_LEN)
         
         if df is not None and len(df) == CONTEXT_LEN:
             senal, precio, variacion, proyectado = predecir_con_timesfm(tfm, df)
+            
+            # Guardamos el nombre limpio (ej. "BTC" en vez de "BTC-USD") para que Streamlit lo lea fácil
+            nombre_limpio = ticker.replace('-USD', '')
+            
             resultados.append({
-                "ticker": ticker,
+                "ticker": nombre_limpio,
                 "precio": precio,
                 "proyectado": proyectado,
                 "variacion": variacion,
                 "senal": senal
             })
-            print(f"{ticker}: Procesado ({senal})")
+            print(f"{nombre_limpio}: Procesado ({senal})")
         else:
             print(f"[{ticker}] Datos insuficientes.")
             
     actualizar_readme(resultados)
-# Guardar también en CSV para Streamlit
-    df_resultados = pd.DataFrame(resultados)
-    df_resultados.to_csv("predicciones.csv", index=False)
+    
+    # Guardar también en CSV para Streamlit
+    if len(resultados) > 0:
+        df_resultados = pd.DataFrame(resultados)
+        df_resultados.to_csv("predicciones.csv", index=False)
+        print("✅ predicciones.csv generado para Streamlit.")
+
 if __name__ == "__main__":
     main()
