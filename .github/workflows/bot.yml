@@ -29,4 +29,5 @@ jobs:
           git config --local user.name "GitHub Action Bot"
           git add README.md
           git commit -m "🤖 Actualización automática TimesFM: $(date)" || echo "No hay cambios para commitear"
+          git pull --rebase origin main
           git push
