@@ -115,6 +115,8 @@ def main():
             print(f"[{ticker}] Datos insuficientes.")
             
     actualizar_readme(resultados)
-
+# Guardar también en CSV para Streamlit
+    df_resultados = pd.DataFrame(resultados)
+    df_resultados.to_csv("predicciones.csv", index=False)
 if __name__ == "__main__":
     main()
