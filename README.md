@@ -1,18 +1,18 @@
 # 🧠 TimesFM Crypto Predictor
 
-**Última actualización:** `2026-10-07 19:31:27 UTC`
+**Última actualización:** `2026-10-08 19:26:22 UTC`
 
 > Predicciones generadas utilizando el modelo fundacional *TimesFM* de Google Research. Horizonte de predicción: 12 horas.
 
 | Criptomoneda | Precio Actual | Proyección (12h) | Variación Est. | Señal Sugerida |
 | :--- | :--- | :--- | :--- | :--- |
-| **BTC** | $83421.8516 | $83445.0312 | +0.03% 📈 | **MANTENER ⚪** |
-| **ETH** | $2566.3501 | $2575.2371 | +0.35% 📈 | **MANTENER ⚪** |
-| **SOL** | $116.02 | $116.7027 | +0.59% 📈 | **MANTENER ⚪** |
-| **BNB** | $771.77 | $776.1659 | +0.57% 📈 | **MANTENER ⚪** |
-| **XRP** | $1.4257 | $1.4352 | +0.67% 📈 | **MANTENER ⚪** |
-| **ADA** | $0.2571 | $0.2605 | +1.31% 📈 | **MANTENER ⚪** |
-| **AVAX** | $11.275 | $11.4348 | +1.42% 📈 | **MANTENER ⚪** |
-| **LINK** | $13.415 | $13.6754 | +1.94% 📈 | **COMPRA 🟢** |
-| **DOT** | $1.1105 | $1.1048 | -0.51% 📉 | **MANTENER ⚪** |
-| **NEAR** | $5.3474 | $5.1955 | -2.84% 📉 | **VENTA 🔴** |
+| **BTC** | $81656.2031 | $81938.3359 | +0.35% 📈 | **MANTENER ⚪** |
+| **ETH** | $2457.3301 | $2461.5271 | +0.17% 📈 | **MANTENER ⚪** |
+| **SOL** | $108.96 | $110.6663 | +1.57% 📈 | **COMPRA 🟢** |
+| **BNB** | $729.74 | $739.3942 | +1.32% 📈 | **MANTENER ⚪** |
+| **XRP** | $1.3671 | $1.3977 | +2.24% 📈 | **COMPRA 🟢** |
+| **ADA** | $0.2305 | $0.2242 | -2.71% 📉 | **VENTA 🔴** |
+| **AVAX** | $10.06 | $10.3813 | +3.19% 📈 | **COMPRA 🟢** |
+| **LINK** | $12.464 | $12.511 | +0.38% 📈 | **MANTENER ⚪** |
+| **DOT** | $1.0436 | $1.0074 | -3.47% 📉 | **VENTA 🔴** |
+| **NEAR** | $4.5427 | $4.7006 | +3.48% 📈 | **COMPRA 🟢** |
